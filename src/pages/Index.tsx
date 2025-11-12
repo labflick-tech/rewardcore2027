@@ -1,23 +1,39 @@
+import { useEffect, useState } from "react";
 import { Navbar } from "@/components/Navbar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Award, Share2, TrendingUp, Shield, Zap, Gift, CheckCircle2, Users } from "lucide-react";
 import { Link } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
+import { Session } from "@supabase/supabase-js";
 import heroImage from "@/assets/hero-rewards.jpg";
 
 const Index = () => {
+  const [session, setSession] = useState<Session | null>(null);
+
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(session);
+    });
+
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      setSession(session);
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
+
   return (
     <div className="min-h-screen bg-background">
-      <Navbar isLoggedIn={false} />
+      <Navbar isLoggedIn={!!session} />
 
       {/* Hero Section */}
       <section className="pt-24 pb-16 md:pt-32 md:pb-24">
         <div className="container mx-auto px-4">
           <div className="grid md:grid-cols-2 gap-12 items-center">
-            <div className="space-y-6 animate-fade-in">
-              <div className="inline-block px-4 py-2 bg-primary/10 rounded-full">
-                <span className="text-sm font-semibold text-primary">🇰🇪 Made for Kenya</span>
-              </div>
+          <div className="space-y-6 animate-fade-in">
               <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold leading-tight">
                 Earn Real Money from{" "}
                 <span className="bg-gradient-hero bg-clip-text text-transparent">
@@ -28,15 +44,26 @@ const Index = () => {
                 Complete tasks, refer friends, and unlock rewards. Get paid directly to your PayPal account with as little as $2.
               </p>
               <div className="flex flex-col sm:flex-row gap-4">
-                <Button variant="hero" size="xl" asChild>
-                  <Link to="/auth?mode=signup">
-                    Start Earning Now
-                    <Award className="w-5 h-5 ml-2" />
-                  </Link>
-                </Button>
-                <Button variant="outline" size="xl" asChild>
-                  <Link to="#how-it-works">How It Works</Link>
-                </Button>
+                {session ? (
+                  <Button variant="hero" size="xl" asChild>
+                    <Link to="/dashboard">
+                      Go to Dashboard
+                      <Award className="w-5 h-5 ml-2" />
+                    </Link>
+                  </Button>
+                ) : (
+                  <>
+                    <Button variant="hero" size="xl" asChild>
+                      <Link to="/auth?mode=signup">
+                        Start Earning Now
+                        <Award className="w-5 h-5 ml-2" />
+                      </Link>
+                    </Button>
+                    <Button variant="outline" size="xl" asChild>
+                      <Link to="#how-it-works">How It Works</Link>
+                    </Button>
+                  </>
+                )}
               </div>
               <div className="flex items-center gap-8 pt-4">
                 <div>
@@ -185,12 +212,21 @@ const Index = () => {
               Join thousands of Kenyans already earning real money on RewardCore
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center pt-4">
-              <Button variant="secondary" size="xl" asChild>
-                <Link to="/auth?mode=signup">
-                  Create Free Account
-                  <CheckCircle2 className="w-5 h-5 ml-2" />
-                </Link>
-              </Button>
+              {session ? (
+                <Button variant="secondary" size="xl" asChild>
+                  <Link to="/dashboard">
+                    Go to Dashboard
+                    <CheckCircle2 className="w-5 h-5 ml-2" />
+                  </Link>
+                </Button>
+              ) : (
+                <Button variant="secondary" size="xl" asChild>
+                  <Link to="/auth?mode=signup">
+                    Create Free Account
+                    <CheckCircle2 className="w-5 h-5 ml-2" />
+                  </Link>
+                </Button>
+              )}
             </div>
             <p className="text-sm opacity-75">No credit card required • Free forever • Payout in 24 hours</p>
           </div>

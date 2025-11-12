@@ -21,6 +21,7 @@ const Auth = () => {
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [username, setUsername] = useState("");
+  const [referralCode, setReferralCode] = useState<string | null>(null);
 
   useEffect(() => {
     // Check if user is already logged in
@@ -29,6 +30,12 @@ const Auth = () => {
         navigate("/dashboard");
       }
     });
+
+    // Check for referral code in sessionStorage
+    const storedReferralCode = sessionStorage.getItem("referral_code");
+    if (storedReferralCode) {
+      setReferralCode(storedReferralCode);
+    }
   }, [navigate]);
 
   const handleSignup = async (e: React.FormEvent) => {
@@ -46,7 +53,7 @@ const Auth = () => {
 
     setLoading(true);
     
-    const { error } = await supabase.auth.signUp({
+    const { data, error } = await supabase.auth.signUp({
       email,
       password,
       options: {
@@ -57,14 +64,64 @@ const Auth = () => {
       },
     });
 
-    setLoading(false);
-
     if (error) {
+      setLoading(false);
       toast.error(error.message);
-    } else {
-      toast.success("Account created! Please check your email to verify.");
-      setMode("login");
+      return;
     }
+
+    // Handle referral if exists
+    if (referralCode && data.user) {
+      setTimeout(async () => {
+        // Find the referrer profile
+        const { data: referrerProfile } = await supabase
+          .from("profiles")
+          .select("id")
+          .eq("referral_code", referralCode)
+          .single();
+
+        if (referrerProfile) {
+          // Update referred user's profile
+          await supabase
+            .from("profiles")
+            .update({ referred_by: referrerProfile.id })
+            .eq("id", data.user.id);
+
+          // Create referral record
+          await supabase
+            .from("referrals")
+            .insert({
+              referrer_id: referrerProfile.id,
+              referred_id: data.user.id,
+            });
+
+          // Update referrer's profile
+          const { data: currentReferrer } = await supabase
+            .from("profiles")
+            .select("referral_count, total_balance, total_earned")
+            .eq("id", referrerProfile.id)
+            .single();
+
+          if (currentReferrer) {
+            await supabase
+              .from("profiles")
+              .update({
+                referral_count: currentReferrer.referral_count + 1,
+                total_balance: Number(currentReferrer.total_balance) + 0.20,
+                total_earned: Number(currentReferrer.total_earned) + 0.20,
+              })
+              .eq("id", referrerProfile.id);
+          }
+        }
+
+        // Clear referral code from sessionStorage
+        sessionStorage.removeItem("referral_code");
+      }, 1000);
+    }
+
+    setLoading(false);
+    toast.success("Account created successfully!");
+    navigate("/dashboard");
   };
 
   const handleLogin = async (e: React.FormEvent) => {
@@ -110,6 +167,13 @@ const Auth = () => {
           </CardHeader>
 
           <CardContent>
+            {referralCode && (
+              <div className="mb-4 p-3 bg-primary/10 border border-primary/20 rounded-lg">
+                <p className="text-sm text-primary font-medium">
+                  🎉 Referral code applied: {referralCode}
+                </p>
+              </div>
+            )}
             <form onSubmit={mode === "login" ? handleLogin : handleSignup} className="space-y-4">
               {mode === "signup" && (
                 <div className="space-y-2">
