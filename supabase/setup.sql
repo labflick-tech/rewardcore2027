@@ -1,6 +1,15 @@
--- Complete Supabase Database Setup
+-- ============================================
+-- COMPLETE SUPABASE DATABASE SETUP
+-- ============================================
 -- Run this entire script in your Supabase SQL Editor
-
+-- 
+-- IMPORTANT: After running this script, configure authentication:
+-- 1. Go to Authentication > Settings in Supabase Dashboard
+-- 2. ENABLE "Auto Confirm Email" (Users can sign up without email verification)
+-- 3. DISABLE "Confirm Email" (No email confirmation required)
+-- 4. Set your Site URL under Authentication > URL Configuration
+-- 5. Add your deployed app URL to Redirect URLs
+--
 -- ============================================
 -- TABLES
 -- ============================================
