@@ -120,8 +120,10 @@ const Auth = () => {
     }
 
     setLoading(false);
-    toast.success("Account created successfully!");
-    navigate("/dashboard");
+    toast.success("Account created successfully! Please login to continue.");
+    setMode("login");
+    setPassword("");
+    setConfirmPassword("");
   };
 
   const handleLogin = async (e: React.FormEvent) => {
