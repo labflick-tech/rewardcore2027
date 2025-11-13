@@ -11,7 +11,39 @@
 -- 5. Add your deployed app URL to Redirect URLs
 --
 -- ============================================
--- TABLES
+-- CLEAN UP EXISTING OBJECTS (Run this to reset)
+-- ============================================
+
+-- Drop existing policies
+DROP POLICY IF EXISTS "Users can create their own withdrawals" ON public.withdrawals;
+DROP POLICY IF EXISTS "Users can view their own withdrawals" ON public.withdrawals;
+DROP POLICY IF EXISTS "Users can insert their own completed tasks" ON public.user_tasks;
+DROP POLICY IF EXISTS "Users can view their own completed tasks" ON public.user_tasks;
+DROP POLICY IF EXISTS "Anyone can view active tasks" ON public.tasks;
+DROP POLICY IF EXISTS "System can insert referrals" ON public.referrals;
+DROP POLICY IF EXISTS "Users can view their own referrals" ON public.referrals;
+DROP POLICY IF EXISTS "Users can update their own profile" ON public.profiles;
+DROP POLICY IF EXISTS "Users can insert their own profile" ON public.profiles;
+DROP POLICY IF EXISTS "Anyone can view profiles" ON public.profiles;
+
+-- Drop existing triggers
+DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
+DROP TRIGGER IF EXISTS update_profiles_updated_at ON public.profiles;
+
+-- Drop existing tables (in correct order due to foreign keys)
+DROP TABLE IF EXISTS public.withdrawals CASCADE;
+DROP TABLE IF EXISTS public.user_tasks CASCADE;
+DROP TABLE IF EXISTS public.tasks CASCADE;
+DROP TABLE IF EXISTS public.referrals CASCADE;
+DROP TABLE IF EXISTS public.profiles CASCADE;
+
+-- Drop existing functions
+DROP FUNCTION IF EXISTS public.handle_new_user() CASCADE;
+DROP FUNCTION IF EXISTS public.update_updated_at_column() CASCADE;
+DROP FUNCTION IF EXISTS public.generate_referral_code() CASCADE;
+
+-- ============================================
+-- CREATE TABLES
 -- ============================================
 
 -- Profiles Table
@@ -213,11 +245,10 @@ VALUES
 ON CONFLICT DO NOTHING;
 
 -- ============================================
--- CONFIGURATION NOTES
+-- SETUP COMPLETE!
 -- ============================================
-
--- After running this script:
+-- Next steps:
 -- 1. Go to Authentication > Settings in Supabase Dashboard
--- 2. Enable "Confirm Email" if you want email verification
--- 3. Or disable it for development by enabling "Auto Confirm Email"
--- 4. Set your Site URL and Redirect URLs under Authentication > URL Configuration
+-- 2. ENABLE "Auto Confirm Email" for instant signup (no email verification)
+-- 3. Set your Site URL and add Redirect URLs
+-- 4. Users can now sign up and login immediately!
